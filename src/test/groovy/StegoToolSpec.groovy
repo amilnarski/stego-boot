@@ -1,64 +1,64 @@
 import spock.lang.Specification
 import stego.StegoTool
 
-class StegoToolSpec extends Specification{
-    def "getLSB(0)"(){
+class StegoToolSpec extends Specification {
+    def "getLSB(0)"() {
         when:
-        def lsb = StegoTool.getLSB(0)
+            def lsb = StegoTool.getLSB(0)
         then:
-        lsb == 0
+            lsb == 0
     }
 
-    def "getLSB(1)"(){
+    def "getLSB(1)"() {
         when:
-        def lsb = StegoTool.getLSB(1)
+            def lsb = StegoTool.getLSB(1)
         then:
-        lsb == 1
+            lsb == 1
     }
 
-    def "getLSB(10)"(){
+    def "getLSB(10)"() {
         when:
-        def lsb = StegoTool.getLSB(10)
+            def lsb = StegoTool.getLSB(10)
         then:
-        lsb == 0
+            lsb == 0
     }
 
-    def "getLSB(11)"(){
+    def "getLSB(11)"() {
         when:
-        def lsb = StegoTool.getLSB(11)
+            def lsb = StegoTool.getLSB(11)
         then:
-        lsb == 1
+            lsb == 1
     }
 
-    def "getMSB(0)"(){
+    def "getMSB(0)"() {
         when:
-        def msb = StegoTool.getMSB(0)
+            def msb = StegoTool.getMSB(0)
         then:
-        msb == 0
+            msb == 0
     }
 
-    def "getMSB(1)"(){
+    def "getMSB(1)"() {
         when:
-        def msb = StegoTool.getMSB(1)
+            def msb = StegoTool.getMSB(1)
         then:
-        msb == 0
+            msb == 0
     }
 
-    def "getMSB(MAX_VALUE/2+1)"(){
+    def "getMSB(MAX_VALUE/2+1)"() {
         setup:
-        def x = (Integer.MAX_VALUE/2)+1 as int
+            int x = 0b00000000000000001000000000000000
         when:
-        def msb = StegoTool.getMSB(x)
+            def msb = StegoTool.getMSB(x)
         then:
-        msb == 1
+            msb == 1
     }
 
-    def "getMSB(MAX_VALUE)"(){
+    def "getMSB(MAX_VALUE)"() {
         setup:
-        def x = Integer.MAX_VALUE
+            def x = Integer.MAX_VALUE
         when:
-        def msb = StegoTool.getMSB(x)
+            def msb = StegoTool.getMSB(x)
         then:
-        msb == 1
+            msb == 1
     }
 }

@@ -5,6 +5,7 @@ import org.springframework.stereotype.Component;
 import java.awt.image.BufferedImage;
 
 import static com.google.common.base.Preconditions.checkArgument;
+import static com.google.common.base.Preconditions.checkNotNull;
 
 @Component
 public class StegoTool {
@@ -27,10 +28,17 @@ public class StegoTool {
     }
 
     public static int getLSB(int i){
-        return i << -1 >>> -1;
+        checkNotNull(i);
+        checkArgument(i >= 0);
+        return i & 1;
     }
 
-    public static int getMSB(int i){
-        return i >>> -2;
+    public static int getMSB(Integer i){
+        //check to make sure i is positive to avoid two's complement
+        //shift left 16 to erase any high order bits,
+        //then shift left so msb is in 1s place
+        checkNotNull(i);
+        checkArgument(i >= 0);
+        return (i << 16) >>> 31;
     }
 }
