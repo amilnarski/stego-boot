@@ -28,17 +28,22 @@ public class StegoTool {
     }
 
     public static int getLSB(int i){
-        checkNotNull(i);
         checkArgument(i >= 0);
         return i & 1;
     }
 
-    public static int getMSB(Integer i){
+    public static int getMSB(int i){
         //check to make sure i is positive to avoid two's complement
         //shift left 16 to erase any high order bits,
         //then shift left so msb is in 1s place
-        checkNotNull(i);
-        checkArgument(i >= 0);
+        if(i < 0){
+            throw new IllegalArgumentException("NOPE");
+        }
         return (i << 16) >>> 31;
+    }
+
+    public static int getMSB(int i, int position){
+        checkArgument(i > -1);
+        return (i << 32-position) >>> 31;
     }
 }
