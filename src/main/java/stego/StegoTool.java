@@ -1,11 +1,11 @@
 package stego;
 
 import org.springframework.stereotype.Component;
+import stego.imaging.Pixel;
 
 import java.awt.image.BufferedImage;
 
 import static com.google.common.base.Preconditions.checkArgument;
-import static com.google.common.base.Preconditions.checkNotNull;
 
 @Component
 public class StegoTool {
@@ -28,7 +28,7 @@ public class StegoTool {
     }
 
     public static int getLSB(int i){
-        checkArgument(i >= 0);
+        checkArgument(i > -1);
         return i & 1;
     }
 
@@ -36,9 +36,7 @@ public class StegoTool {
         //check to make sure i is positive to avoid two's complement
         //shift left 16 to erase any high order bits,
         //then shift left so msb is in 1s place
-        if(i < 0){
-            throw new IllegalArgumentException("NOPE");
-        }
+        checkArgument(i > -1);
         return (i << 16) >>> 31;
     }
 
