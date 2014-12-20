@@ -13,21 +13,17 @@ import stego.StegoTool;
 import stego.imaging.Pixel;
 
 import javax.imageio.ImageIO;
-import javax.imageio.ImageReader;
 import java.awt.*;
 import java.awt.image.BufferedImage;
 import java.io.ByteArrayOutputStream;
 import java.io.IOException;
 import java.util.*;
 import java.util.List;
-import java.util.function.Function;
-import java.util.function.Predicate;
 import java.util.stream.Collectors;
 
 import static com.google.common.collect.Lists.newArrayList;
 import static com.google.common.collect.Maps.newHashMap;
-import static java.util.stream.Collectors.toList;
-import static java.util.stream.Collectors.toMap;
+
 import static stego.StegoTool.getLSB;
 
 @Controller
@@ -96,7 +92,7 @@ public class MainController {
         for (int x = 0; x < image.getWidth(); x++) {
             for (int y = 0; y < image.getHeight(); y++) {
                 final Color color = new Color(image.getRGB(x, y));
-                final Color lsbColor = new Color(getLSB(color.getRed()), getLSB(color.getGreen()), getLSB(color.getBlue()));
+                final Color lsbColor = new Color(255*getLSB(color.getRed()), 255*getLSB(color.getGreen()), 255*getLSB(color.getBlue()));
                 image.setRGB(x, y, lsbColor.getRGB());
 
             }
