@@ -22,9 +22,12 @@ import java.util.*;
 import java.util.List;
 import java.util.function.Function;
 import java.util.function.Predicate;
+import java.util.stream.Collectors;
 
 import static com.google.common.collect.Lists.newArrayList;
+import static com.google.common.collect.Maps.newHashMap;
 import static java.util.stream.Collectors.toList;
+import static java.util.stream.Collectors.toMap;
 import static stego.StegoTool.getLSB;
 
 @Controller
@@ -48,30 +51,31 @@ public class MainController {
         }
 
         BufferedImage coverImg = Sanselan.getBufferedImage(cover.getInputStream());
-        final List<Pixel> coverPixels = newArrayList();
+        final Map<Pixel.PixelKey, Pixel> coverPixels = newHashMap();
         for (int x = 0; x < coverImg.getWidth(); x++) {
             for (int y = 0; y < coverImg.getHeight(); y++) {
-                coverPixels.add(new Pixel(x, y, coverImg.getRGB(x, y)));
+                final Pixel pixel = new Pixel(x, y, coverImg.getRGB(x, y));
+                coverPixels.put(pixel.getKey(), pixel);
             }
         }
 
-        final List<Pixel> messageMsbs = messagePixels.parallelStream()
+        final Map<Pixel.PixelKey, Pixel> pixelMap = messagePixels.parallelStream()
                 .map(p -> new Pixel(p.getX(), p.getY(), StegoTool.getMSB(p.getRed(), 8), StegoTool.getMSB(p.getGreen(), 8), StegoTool.getMSB(p.getBlue(), 8)))
-                .collect(toList());
-
+                .collect(Collectors.toMap(Pixel::getKey, p -> p));
 
         for (int x = 0; x < coverImg.getWidth(); x++) {
             for (int y = 0; y < coverImg.getHeight(); y++) {
-                final int streamX = x;
-                final int streamY = y;
-                final Pixel coverPixel = coverPixels.parallelStream().filter(p -> p.getX() == streamX && p.getY() == streamY).findFirst().orElse(new Pixel(x, y, 0, 0, 0));
-                final Pixel messageMSBPixel = messageMsbs.parallelStream().filter(p -> p.getX() == streamX && p.getY() == streamY).findFirst().orElse(coverPixel);
+                final Pixel.PixelKey key = new Pixel.PixelKey(x, y);
+                final Pixel messageMSBPixel = pixelMap.get(key);
+                if (messageMSBPixel != null) {
+                    final Pixel coverPixel = coverPixels.get(key);
 
-                final int redEmbed = coverPixel.getRed() | messageMSBPixel.getRed();
-                final int greenEmbed = coverPixel.getGreen() | messageMSBPixel.getGreen();
-                final int blueEmbed = coverPixel.getBlue() | messageMSBPixel.getBlue();
+                    final int redEmbed = coverPixel.getRed() | messageMSBPixel.getRed();
+                    final int greenEmbed = coverPixel.getGreen() | messageMSBPixel.getGreen();
+                    final int blueEmbed = coverPixel.getBlue() | messageMSBPixel.getBlue();
 
-                coverImg.setRGB(x, y, new Pixel(coverPixel.getX(), coverPixel.getY(), redEmbed, greenEmbed, blueEmbed).getRGB());
+                    coverImg.setRGB(x, y, new Pixel(coverPixel.getX(), coverPixel.getY(), redEmbed, greenEmbed, blueEmbed).getRGB());
+                }
             }
         }
 
@@ -92,7 +96,9 @@ public class MainController {
         for (int x = 0; x < image.getWidth(); x++) {
             for (int y = 0; y < image.getHeight(); y++) {
                 final Color color = new Color(image.getRGB(x, y));
-                image.setRGB(x, y, new Color(getLSB(color.getRed()), getLSB(color.getGreen()), getLSB(color.getBlue())).getRGB());
+                final Color lsbColor = new Color(getLSB(color.getRed()), getLSB(color.getGreen()), getLSB(color.getBlue()));
+                image.setRGB(x, y, lsbColor.getRGB());
+
             }
         }
 
