@@ -57,7 +57,7 @@ class StegoToolSpec extends Specification {
         setup:
             int x = 0b00000000000000001000000000000000
         when:
-            def msb = StegoTool.getMSB(x, 16)
+            def msb = StegoTool.getBit(x, 16)
         then:
             msb == 1
     }
@@ -66,7 +66,7 @@ class StegoToolSpec extends Specification {
         setup:
             int x = 0b00000000000000000000000010000000
         when:
-            def msb = StegoTool.getMSB(x, 8)
+            def msb = StegoTool.getBit(x, 8)
         then:
             msb == 1
     }

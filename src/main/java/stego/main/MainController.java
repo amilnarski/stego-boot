@@ -9,7 +9,6 @@ import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.multipart.MultipartFile;
 import org.springframework.web.servlet.ModelAndView;
 import stego.StegoTool;
-import stego.imaging.PixelKey;
 
 import javax.imageio.ImageIO;
 import java.awt.*;
@@ -17,8 +16,6 @@ import java.awt.image.BufferedImage;
 import java.io.ByteArrayOutputStream;
 import java.io.IOException;
 import java.util.Base64;
-import java.util.Map;
-import java.util.concurrent.ConcurrentHashMap;
 
 import static stego.StegoTool.getLSB;
 import static stego.StegoTool.replaceLSB;
@@ -36,33 +33,29 @@ public class MainController {
         final ModelAndView imageOutput = new ModelAndView("imageOutput");
 
         BufferedImage messageImg = Sanselan.getBufferedImage(message.getInputStream());
-        final Map<PixelKey, Color> messagePixels = new ConcurrentHashMap<>(messageImg.getWidth()*messageImg.getHeight());
-        for (int x = 0; x < messageImg.getWidth(); x++) {
-            for (int y = 0; y < messageImg.getHeight(); y++) {
-                Color messageColor = new Color(messageImg.getRGB(x, y));
-                messagePixels.put(new PixelKey(x, y), new Color(StegoTool.getMSB(messageColor.getRed(), 8), StegoTool.getMSB(messageColor.getGreen(), 8), StegoTool.getMSB(messageColor.getBlue(), 8)));
-            }
-        }
+        int[] msgPixelArray = new int[messageImg.getWidth() * messageImg.getHeight()];
+        messageImg.getRGB(0, 0, messageImg.getWidth(), messageImg.getHeight(), msgPixelArray, 0, messageImg.getWidth());
+
 
         BufferedImage coverImg = Sanselan.getBufferedImage(cover.getInputStream());
-        final Map<PixelKey, Color> coverPixels = new ConcurrentHashMap<>(coverImg.getWidth()*coverImg.getHeight());
-        for (int x = 0; x < coverImg.getWidth(); x++) {
-            for (int y = 0; y < coverImg.getHeight(); y++) {
-                coverPixels.put(new PixelKey(x, y), new Color(coverImg.getRGB(x, y)));
-            }
+        int[] coverPixelArray = new int[messageImg.getWidth() * messageImg.getHeight()];
+        coverImg.getRGB(0, 0, messageImg.getWidth(), messageImg.getHeight(), coverPixelArray, 0, messageImg.getWidth());
+
+
+        for(int index = 0; index < msgPixelArray.length; index++ ){
+            final Color msgRGB = new Color(msgPixelArray[index]);
+            final Color coverColor = new Color(coverPixelArray[index]);
+            final Color msgColor = new Color(StegoTool.getBit(msgRGB.getRed(), 8), StegoTool.getBit(msgRGB.getGreen(), 8), StegoTool.getBit(msgRGB.getBlue(), 8));
+            final Color embedColor = new Color(replaceLSB(coverColor.getRed(), msgColor.getRed()), replaceLSB(coverColor.getGreen(), msgColor.getGreen()), replaceLSB(coverColor.getBlue(), msgColor.getBlue()));
+            coverPixelArray[index] = embedColor.getRGB();
         }
 
-        coverPixels.entrySet().parallelStream().filter(entry -> messagePixels.get(entry.getKey()) != null).forEach(e -> {
-            PixelKey key = e.getKey();
-            final Color msgColor = messagePixels.get(key);
-            final Color coverColor = e.getValue();
-            final Color embedColor = new Color(replaceLSB(coverColor.getRed(), msgColor.getRed()), replaceLSB(coverColor.getGreen(), msgColor.getGreen()), replaceLSB(coverColor.getBlue(), msgColor.getBlue()));
-            coverImg.setRGB(key.getX(), key.getY(), embedColor.getRGB());
-        });
+        coverImg.setRGB(0, 0, messageImg.getWidth(), messageImg.getHeight(), coverPixelArray, 0, messageImg.getWidth());
 
         ByteArrayOutputStream outputStream = new ByteArrayOutputStream();
         ImageIO.write(coverImg, "png", outputStream);
         imageOutput.addObject("image64", Base64.getEncoder().encodeToString(outputStream.toByteArray()));
+        imageOutput.addObject("name", name);
         return imageOutput;
     }
 
@@ -71,14 +64,16 @@ public class MainController {
         final ModelAndView imageOutput = new ModelAndView("imageOutput");
 
         final BufferedImage image = Sanselan.getBufferedImage(stegoObject.getInputStream());
+        int[] msgPixelArray = new int[image.getWidth() * image.getHeight()];
+        image.getRGB(0, 0, image.getWidth(), image.getHeight(), msgPixelArray, 0, image.getWidth());
 
-        for (int x = 0; x < image.getWidth(); x++) {
-            for (int y = 0; y < image.getHeight(); y++) {
-                final Color color = new Color(image.getRGB(x, y));
-                final Color lsbColor = new Color(255*getLSB(color.getRed()), 255*getLSB(color.getGreen()), 255*getLSB(color.getBlue()));
-                image.setRGB(x, y, lsbColor.getRGB());
-            }
+        for(int index = 0; index < msgPixelArray.length; index++ ) {
+            final Color color = new Color(msgPixelArray[index]);
+            final Color lsbColor = new Color(255 * getLSB(color.getRed()), 255 * getLSB(color.getGreen()), 255 * getLSB(color.getBlue()));
+            msgPixelArray[index] = lsbColor.getRGB();
         }
+
+        image.setRGB(0, 0, image.getWidth(), image.getHeight(), msgPixelArray, 0, image.getWidth());
 
         ByteArrayOutputStream outputStream = new ByteArrayOutputStream();
         ImageIO.write(image, "png", outputStream);
