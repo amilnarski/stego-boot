@@ -80,4 +80,9 @@ public class MainController {
         imageOutput.addObject("image64", Base64.getEncoder().encodeToString(outputStream.toByteArray()));
         return imageOutput;
     }
+
+    @RequestMapping(value = "/output", method = RequestMethod.GET)
+    public ModelAndView imageOutput(){
+        return new ModelAndView("imageOutput");
+    }
 }
