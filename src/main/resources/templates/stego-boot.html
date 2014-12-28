@@ -23,25 +23,32 @@
 
     <div class="starter-template">
         <h1>stego-boot</h1>
+
         <p class="lead">An easy LSB steganography tool—Just provide your cover image and message below.<br/></p>
     </div>
 
     <div class="col-md-6">
         <h3>Encode:</h3>
+
         <form method="POST" role="form" enctype="multipart/form-data" action="/encode">
             <div class="form-group">
                 <label for="cover">Cover Image</label>
-                <p class="help-block">Enter the cover for your stego object. The cover must be larger than the message.</p>
+
+                <p class="help-block">Enter the cover for your stego object. The cover must be larger than the
+                    message.</p>
                 <input type="file" id="cover" name="cover"/>
             </div>
             <div class="form-group">
                 <label for="message">Message Image</label>
-                <p class="help-block">Enter the message for your stego object. The message must be smaller than the cover.</p>
+
+                <p class="help-block">Enter the message for your stego object. The message must be smaller than the
+                    cover.</p>
                 <input type="file" id="message" name="message"/>
             </div>
             <div class="form-group">
-            <label for="name">Name</label>
-            <input type="text" class="form-control" id="name" name="name" placeholder="Enter a name for your stego object."/>
+                <label for="name">Name</label>
+                <input type="text" class="form-control" id="name" name="name"
+                       placeholder="Enter a name for your stego object."/>
             </div>
             <div class="form-group">
                 <div class="col-sm-offset-2 col-sm-10">
@@ -53,9 +60,11 @@
     <div class="col-md-2"></div>
     <div class="col-md-4">
         <h3>Decode:</h3>
+
         <form method="POST" role="form" enctype="multipart/form-data" action="/decode">
             <div class="form-group">
                 <label for="stego-object">Stego Object</label>
+
                 <p class="help-block">Enter the stego object.</p>
                 <input type="file" id="stego-object" name="stego-object"/>
             </div>

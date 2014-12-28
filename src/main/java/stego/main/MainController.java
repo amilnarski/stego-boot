@@ -1,8 +1,13 @@
 package stego.main;
 
+import com.google.common.base.Throwables;
+import org.apache.sanselan.ImageFormat;
 import org.apache.sanselan.ImageReadException;
+import org.apache.sanselan.ImageWriteException;
 import org.apache.sanselan.Sanselan;
 import org.springframework.stereotype.Controller;
+import org.springframework.ui.Model;
+import org.springframework.web.bind.annotation.ExceptionHandler;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestMethod;
 import org.springframework.web.bind.annotation.RequestParam;
@@ -29,7 +34,7 @@ public class MainController {
     }
 
     @RequestMapping(value = "/encode", method = RequestMethod.POST)
-    public ModelAndView encode(@RequestParam("cover") MultipartFile cover, @RequestParam("message") MultipartFile message, @RequestParam("name") String name) throws IOException, ImageReadException {
+    public ModelAndView encode(@RequestParam("cover") MultipartFile cover, @RequestParam("message") MultipartFile message, @RequestParam("name") String name) throws IOException, ImageReadException, ImageWriteException {
         final ModelAndView imageOutput = new ModelAndView("imageOutput");
 
         BufferedImage messageImg = Sanselan.getBufferedImage(message.getInputStream());
@@ -43,24 +48,20 @@ public class MainController {
 
 
         for(int index = 0; index < msgPixelArray.length; index++ ){
-            final Color msgRGB = new Color(msgPixelArray[index]);
             final Color coverColor = new Color(coverPixelArray[index]);
-            final Color msgColor = new Color(StegoTool.getBit(msgRGB.getRed(), 8), StegoTool.getBit(msgRGB.getGreen(), 8), StegoTool.getBit(msgRGB.getBlue(), 8));
-            final Color embedColor = new Color(replaceLSB(coverColor.getRed(), msgColor.getRed()), replaceLSB(coverColor.getGreen(), msgColor.getGreen()), replaceLSB(coverColor.getBlue(), msgColor.getBlue()));
-            coverPixelArray[index] = embedColor.getRGB();
+            int msgRGB = msgPixelArray[index];
+            coverPixelArray[index] = new Color(replaceLSB(coverColor.getRed(), StegoTool.getBit(msgRGB, 24)), replaceLSB(coverColor.getGreen(), StegoTool.getBit(msgRGB, 16)), replaceLSB(coverColor.getBlue(), StegoTool.getBit(msgRGB, 8))).getRGB();
         }
 
         coverImg.setRGB(0, 0, messageImg.getWidth(), messageImg.getHeight(), coverPixelArray, 0, messageImg.getWidth());
 
-        ByteArrayOutputStream outputStream = new ByteArrayOutputStream();
-        ImageIO.write(coverImg, "png", outputStream);
-        imageOutput.addObject("image64", Base64.getEncoder().encodeToString(outputStream.toByteArray()));
+        imageOutput.addObject("image64", Base64.getEncoder().encodeToString(getBytesFromBufferedImage(coverImg)));
         imageOutput.addObject("name", name);
         return imageOutput;
     }
 
     @RequestMapping(value = "/decode", method = RequestMethod.POST)
-    public ModelAndView decode(@RequestParam("stego-object") MultipartFile stegoObject) throws IOException, ImageReadException {
+    public ModelAndView decode(@RequestParam("stego-object") MultipartFile stegoObject) throws IOException, ImageReadException, ImageWriteException {
         final ModelAndView imageOutput = new ModelAndView("imageOutput");
 
         final BufferedImage image = Sanselan.getBufferedImage(stegoObject.getInputStream());
@@ -75,14 +76,24 @@ public class MainController {
 
         image.setRGB(0, 0, image.getWidth(), image.getHeight(), msgPixelArray, 0, image.getWidth());
 
-        ByteArrayOutputStream outputStream = new ByteArrayOutputStream();
-        ImageIO.write(image, "png", outputStream);
-        imageOutput.addObject("image64", Base64.getEncoder().encodeToString(outputStream.toByteArray()));
+        imageOutput.addObject("image64", Base64.getEncoder().encodeToString(getBytesFromBufferedImage(image)));
         return imageOutput;
     }
 
     @RequestMapping(value = "/output", method = RequestMethod.GET)
     public ModelAndView imageOutput(){
         return new ModelAndView("imageOutput");
+    }
+
+    @ExceptionHandler({IOException.class, ImageReadException.class, ImageWriteException.class})
+    private ModelAndView handleException(Exception e){
+        ModelAndView error = new ModelAndView("errorPage");
+        error.addObject("errorName", e.getMessage());
+        error.addObject("stackTrace", Throwables.getStackTraceAsString(e));
+        return error;
+    }
+
+    private static byte[] getBytesFromBufferedImage(BufferedImage image) throws IOException, ImageWriteException {
+        return Sanselan.writeImageToBytes(image, ImageFormat.IMAGE_FORMAT_PNG, null);
     }
 }
